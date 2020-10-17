@@ -1,5 +1,6 @@
 package com.sample.securityportal;
 
+import static org.springframework.security.extensions.saml2.config.SAMLConfigurer.saml;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -8,34 +9,30 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
-import static org.springframework.security.extensions.saml2.config.SAMLConfigurer.saml;
-
 @EnableWebSecurity
 @Configuration
 @EnableGlobalMethodSecurity(securedEnabled = true)
-public class SecurityContext extends WebSecurityConfigurerAdapter {
-
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Value("${security.saml2.metadata-url}")
-    private String metadataUrl;
+    String metadataUrl;
 
     @Value("${server.ssl.key-alias}")
-    private String keyAlias;
+    String keyAlias;
 
     @Value("${server.ssl.key-store-password}")
-    private String password;
+    String password;
 
     @Value("${server.port}")
-    private String port;
+    String port;
 
     @Value("${server.ssl.key-store}")
-    private String keyStoreFilePath;
-
+    String keyStoreFilePath;
 
     @Override
-    protected void configure(HttpSecurity http) throws Exception {
-
-        http.authorizeRequests()
-                .antMatchers("/saml").permitAll()
+    protected void configure(final HttpSecurity http) throws Exception {
+        http
+                .authorizeRequests()
+                .antMatchers("/saml*").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .apply(saml())
@@ -44,6 +41,7 @@ public class SecurityContext extends WebSecurityConfigurerAdapter {
                 .storeFilePath(this.keyStoreFilePath)
                 .password(this.password)
                 .keyname(this.keyAlias)
+                .keyPassword(this.password)
                 .and()
                 .protocol("https")
                 .hostname(String.format("%s:%s", "localhost", this.port))
@@ -51,6 +49,5 @@ public class SecurityContext extends WebSecurityConfigurerAdapter {
                 .and()
                 .identityProvider()
                 .metadataFilePath(this.metadataUrl);
-
     }
 }
